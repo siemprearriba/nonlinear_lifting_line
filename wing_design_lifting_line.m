@@ -70,25 +70,32 @@ Cl_func = @(alpha_deg) (-0.0002741870*alpha_deg.^3 + 0.0015541706*alpha_deg.^2 +
 Cl_aoa_func = @(alpha_deg) (-3*0.0002741870*alpha_deg.^2 + 2*0.0015541706*alpha_deg + 0.1095103276)*180/pi;
 
 
+
+% SD7043
+Cl_func = @(alpha_deg) (-0.0002*alpha_deg.^3 + 0.0014*alpha_deg.^2 + 0.1473*alpha_deg + 0.2363);
+Cl_aoa_func = @(alpha_deg) (-3*0.0002*alpha_deg.^2 + 2*0.0014*alpha_deg + 0.1473)*180/pi;
+
+
+
 %% Wing Geometry
 
 % performance parameters
-V_cruise = 26;                  % cruise velocity, [KCAS]
+V_cruise = 370;                 % cruise velocity, [KCAS]
 V_cruise = V_cruise/1.94;       % cruise velocity, [m/s
 
 % aircraft/wing parameters
-Wo = 12;                        % aircraft mass, [kg]
-Sref = 1.7564;                  % reference wing area, [m^2]
-AR = 13;                        % Aspect Ratio
+Wo = 56300;                        % aircraft mass, [kg]
+Sref = 122;                  % reference wing area, [m^2]
+AR = 9.2;                        % Aspect Ratio
 wing_span = sqrt(Sref*AR);      % entire wing span, [m]
 half_wing_span = wing_span/2.0;
-inboard_half_span_ratio = 0.45;  % ratio: inboard_half_span/half_span
-inboard_taper = 1.0;
-outboard_taper = 0.6;
+inboard_half_span_ratio = 1.0;  % ratio: inboard_half_span/half_span
+inboard_taper = 0.5;
+outboard_taper = 1.6;
 
-incidence = 4.0;                % wing incidence angle [deg]
-inboard_twist = 0.0;            % inboard wing twist angle [deg]
-outboard_twist = -6.0;          % outboard wing twist angle [deg]
+incidence = 1.0;                % wing incidence angle [deg]
+inboard_twist = -2.0;            % inboard wing twist angle [deg]
+outboard_twist = 0.0;          % outboard wing twist angle [deg]
 
 
 % inboard wing portion
@@ -198,7 +205,7 @@ fprintf('Elliptic Lift Coefficient (CL_elliptic): %.4f \n', CL_elliptical)
 %% Lifting-line result
 
 % Lifting-line number of segments
-N = 50;
+N = 100;
 
 % lifting line segment angles
 theta = pi/2:-pi/(2*(N)):pi/(2*N);
@@ -281,6 +288,26 @@ end
 CL = 4*wing_span*sum2 ./ c_mean;
 CL_dist = [CL, 0];
 y_s = [z, wing_span/2];
+
+
+Lift_sum = 0;
+for i=1:length(y_s)-1
+    
+    dS = (y_s(i+1)-y_s(i))*c_mean(i);
+    dL = 1/2*rho_SL*V_cruise^2*dS*CL_dist(i);
+    Lift_sum = Lift_sum + dL;
+    
+    Lift_dist(i) = dL;
+    
+end
+
+
+close all
+
+fprintf('\n diff: %.2f \n',(Wo*9.81-Lift_sum*2)/9.81)
+
+return
+
 
 
 subplot(3,1,3)
