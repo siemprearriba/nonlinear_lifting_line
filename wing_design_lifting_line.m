@@ -1,21 +1,21 @@
 
-%% 
+%%
 % ================================================================ %
-% 
+%
 % MIT License
-% 
+%
 % Copyright (c) [year:2022] [author:Metehan Yayla]
-% 
+%
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
 % in the Software without restriction, including without limitation the rights
 % to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 % copies of the Software, and to permit persons to whom the Software is
 % furnished to do so, subject to the following conditions:
-% 
+%
 % The above copyright notice and this permission notice shall be included in all
 % copies or substantial portions of the Software.
-% 
+%
 % THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 % IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 % FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,7 +25,7 @@
 % SOFTWARE.
 %
 % ================================================================ %
-%% 
+%%
 
 clc
 clear
@@ -35,8 +35,8 @@ format compact
 
 set(0,'defaultAxesFontSize',24)
 
-set(groot,'defaulttextinterpreter','latex');  
-set(groot, 'defaultAxesTickLabelInterpreter','latex');  
+set(groot,'defaulttextinterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 set(groot,'DefaultAxesTickLabelInterpreter','Tex');
 set(groot,'defaultAxesTickLabelInterpreter','latex');
@@ -70,32 +70,25 @@ Cl_func = @(alpha_deg) (-0.0002741870*alpha_deg.^3 + 0.0015541706*alpha_deg.^2 +
 Cl_aoa_func = @(alpha_deg) (-3*0.0002741870*alpha_deg.^2 + 2*0.0015541706*alpha_deg + 0.1095103276)*180/pi;
 
 
-
-% SD7043
-Cl_func = @(alpha_deg) (-0.0002*alpha_deg.^3 + 0.0014*alpha_deg.^2 + 0.1473*alpha_deg + 0.2363);
-Cl_aoa_func = @(alpha_deg) (-3*0.0002*alpha_deg.^2 + 2*0.0014*alpha_deg + 0.1473)*180/pi;
-
-
-
 %% Wing Geometry
 
 % performance parameters
-V_cruise = 370;                 % cruise velocity, [KCAS]
+V_cruise = 26;                  % cruise velocity, [KCAS]
 V_cruise = V_cruise/1.94;       % cruise velocity, [m/s
 
 % aircraft/wing parameters
-Wo = 56300;                        % aircraft mass, [kg]
-Sref = 122;                  % reference wing area, [m^2]
-AR = 9.2;                        % Aspect Ratio
+Wo = 12;                        % aircraft mass, [kg]
+Sref = 1.75;                    % reference wing area, [m^2]
+AR = 13;                        % Aspect Ratio
 wing_span = sqrt(Sref*AR);      % entire wing span, [m]
 half_wing_span = wing_span/2.0;
-inboard_half_span_ratio = 1.0;  % ratio: inboard_half_span/half_span
-inboard_taper = 0.5;
-outboard_taper = 1.6;
+inboard_half_span_ratio = 0.4;  % ratio: inboard_half_span/half_span
+inboard_taper = 1.0;
+outboard_taper = 0.6;
 
-incidence = 1.0;                % wing incidence angle [deg]
-inboard_twist = -2.0;            % inboard wing twist angle [deg]
-outboard_twist = 0.0;          % outboard wing twist angle [deg]
+incidence = 3.0;                % wing incidence angle [deg]
+inboard_twist = 0.0;            % inboard wing twist angle [deg]
+outboard_twist = -2.0;          % outboard wing twist angle [deg]
 
 
 % inboard wing portion
@@ -154,71 +147,16 @@ CL_design = 2*Wo*grav/(rho_SL*Sref*V_cruise^2);
 fprintf('Design Lift Coefficient (CL_design): %.4f \n', CL_design)
 
 
-%%  elliptical lift distribution
-
-% elliptical lift distribution
-iter = 1;
-CL0 = 0.5; dCL = 0.01;
-err = 1.0; err_norm = norm(err); tol = 5e-3;
-while err_norm > tol
-    
-    CL0 = CL0 + sign(err)*dCL;
-    
-    y = linspace(0,half_wing_span, 300);
-    CL_dist_elliptical = CL0*sqrt(1-(y/half_wing_span).^2);
-    
-    dy = y(2)-y(1);
-    CL_elliptical = sum(CL_dist_elliptical*dy)/half_wing_span;
-    
-    err = (CL_design-CL_elliptical);
-    err_norm = norm(err);
-    iter = iter + 1;
-    if iter > 500
-        break
-    end
-end
-
-% plot wing geometry and lift distribution
-fh = figure(1); clf
-fh.WindowState = 'maximized';
-
-subplot(3,1,1)
-hold on
-daspect([1 1 1])%, set(gca,'xtick',[]), set(gca,'ytick',[])
-plot([0 half_wing_span ],[c_root*3/4 c_root*3/4], '-- k', 'LineWidth', 2)
-plot(coords_inFm([1 2], 1), coords_inFm([1 2], 2), '- k', 'LineWidth', 2)
-plot(coords_inFm([1 3], 1), coords_inFm([1 3], 2), '- k', 'LineWidth', 2)
-plot(coords_inFm([2 4], 1), coords_inFm([2 4], 2), '- k', 'LineWidth', 2)
-plot(coords_inFm([3 4], 1), coords_inFm([3 4], 2), '- k', 'LineWidth', 2)
-plot(coords_inFm([4 6], 1), coords_inFm([4 6], 2), '- k', 'LineWidth', 2)
-plot(coords_inFm([3 5], 1), coords_inFm([3 5], 2), '- k', 'LineWidth', 2)
-plot(coords_inFm([5 6], 1), coords_inFm([5 6], 2), '- k', 'LineWidth', 2)
-
-subplot(3,1,3)
-hold on, grid on
-plot(y, CL_dist_elliptical, '--r','LineWidth',2)
-xlabel('Half wingspan [m]')
-
-fprintf('Elliptic Lift Coefficient (CL_elliptic): %.4f \n', CL_elliptical)
-
-
 %% Lifting-line result
 
 % Lifting-line number of segments
-N = 100;
+N = 1000;
 
 % lifting line segment angles
 theta = pi/2:-pi/(2*(N)):pi/(2*N);
 
 % spanwise control point locations
 z = half_wing_span*cos(theta);
-
-figure(1)
-subplot(3,1,1)
-for k=1:N
-    plot([z(k) z(k)], [0 c_root*1.1], '-.r')
-end
-
 
 % inboard and outboard segment separation
 is_inboard_segment = (z<=inboard_half_span);
@@ -251,13 +189,6 @@ for k=1:N
     end
 end
 
-% plot segment angle of attack
-figure(1)
-subplot(3,1,2)
-hold on, grid on
-plot(z, alpha, 'linewidth', 2, 'color', 'k')
-ylabel('Section AoA [deg]')
-
 % lift curve slope for each segmen
 Cl_aoa = Cl_aoa_func(alpha);
 Cl = Cl_func(alpha);
@@ -288,36 +219,47 @@ end
 CL = 4*wing_span*sum2 ./ c_mean;
 CL_dist = [CL, 0];
 y_s = [z, wing_span/2];
-
-
-Lift_sum = 0;
-for i=1:length(y_s)-1
-    
-    dS = (y_s(i+1)-y_s(i))*c_mean(i);
-    dL = 1/2*rho_SL*V_cruise^2*dS*CL_dist(i);
-    Lift_sum = Lift_sum + dL;
-    
-    Lift_dist(i) = dL;
-    
-end
-
-
-close all
-
-fprintf('\n diff: %.2f \n',(Wo*9.81-Lift_sum*2)/9.81)
-
-return
-
-
-
-subplot(3,1,3)
-hold on
-plot(y_s, CL_dist, '-', 'linewidth', 2, 'color', 'k')
-ylabel('Section $C_L$')
-legend('Ideal Elliptic Distribution','Actual Lift Distribution')
 CL_wing = pi * AR * A(1);
 
+
+L_dist = zeros(1,N+1);
+for i=1:N
+    % compute lift per unit span
+    dS = c_mean(i);
+    L_dist(i) = 1/2*rho_SL*V_cruise^2*dS*CL_dist(i);
+end
+
 fprintf('Wing Lift Coefficient (CL_wing): %.4f \n', CL_wing)
+
+
+%%  elliptical lift distribution
+
+% elliptical lift distribution
+iter = 1;
+L0 = 0.5; dL = 1;
+err = 1.0; err_norm = norm(err); tol = 1e-3;
+while err_norm > tol
+    
+    L0 = L0 + sign(err)*dL;
+    
+    % y = linspace(0,half_wing_span, 300);
+    y = y_s;
+    L_dist_elliptical = L0*sqrt(1-(y/half_wing_span).^2);
+    
+    % sum section lift over entire wing
+    dy = [y(2:end) - y(1:end-1) 0];
+    L_elliptical = 2*sum(L_dist_elliptical.*dy);
+    
+    err = (Wo*grav-L_elliptical);
+    err_norm = norm(err);
+    iter = iter + 1;
+    if iter > 500
+        break
+    end
+end
+
+CL_elliptic = (2*L_elliptical)/(rho_SL*V_cruise^2*Sref);
+fprintf('Elliptic Lift Coefficient (CL_elliptic): %.4f \n', CL_elliptic)
 
 
 %% results summary
@@ -330,7 +272,34 @@ fprintf(' Wing Span [m]: %.2f \n', half_wing_span*2)
 fprintf('\n')
 
 
-subplot(3,1,1)
-title(['Number of Elements: ', num2str(N), ', Root Chord: ', num2str(round(c_root,2)), '[m], Mid Chord: ', ...
-    num2str(round(c_mid,2)), '[m], Tip Chord: ', num2str(round(c_tip,2)), '[m], AR:', num2str(AR)])
+%% plot results
+
+% plot wing geometry and lift distribution
+fh1 = figure(1); clf
+fh1.WindowState = 'maximized';
+
+subplot(2,1,1)
+hold on
+daspect([1 1 1])%, set(gca,'xtick',[]), set(gca,'ytick',[])
+plot([0 half_wing_span ],[c_root*3/4 c_root*3/4], '-- k', 'LineWidth', 2)
+plot(coords_inFm([1 2], 1), coords_inFm([1 2], 2), '- k', 'LineWidth', 2)
+plot(coords_inFm([1 3], 1), coords_inFm([1 3], 2), '- k', 'LineWidth', 2)
+plot(coords_inFm([2 4], 1), coords_inFm([2 4], 2), '- k', 'LineWidth', 2)
+plot(coords_inFm([3 4], 1), coords_inFm([3 4], 2), '- k', 'LineWidth', 2)
+plot(coords_inFm([4 6], 1), coords_inFm([4 6], 2), '- k', 'LineWidth', 2)
+plot(coords_inFm([3 5], 1), coords_inFm([3 5], 2), '- k', 'LineWidth', 2)
+plot(coords_inFm([5 6], 1), coords_inFm([5 6], 2), '- k', 'LineWidth', 2)
+
+ylabel('Chord [m]')
+
+subplot(2,1,2)
+hold on, grid on
+plot(y_s, L_dist, 'LineWidth', 2)
+plot(y_s, L_dist_elliptical, 'LineWidth', 2)
+legend('actual','elliptical')
+
+xlabel('Half wingspan [m]')
+ylabel('Lift Dist. [N/m]')
+
+
 
