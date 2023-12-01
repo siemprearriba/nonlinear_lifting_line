@@ -73,22 +73,22 @@ Cl_aoa_func = @(alpha_deg) (-3*0.0002741870*alpha_deg.^2 + 2*0.0015541706*alpha_
 %% Wing Geometry
 
 % performance parameters
-V_cruise = 60;                  % cruise velocity, [KCAS]
+V_cruise = 208;                  % cruise velocity, [KCAS]
 V_cruise = V_cruise/1.94;       % cruise velocity, [m/s
 
 % aircraft/wing parameters
-Wo = 110;                       % aircraft mass, [kg]
-Sref = 2.38;                    % reference wing area, [m^2]
-AR = 13;                        % Aspect Ratio
+Wo = 51000;                       % aircraft mass, [kg]
+Sref = 116;                    % reference wing area, [m^2]
+AR = 11;                        % Aspect Ratio
 wing_span = sqrt(Sref*AR);      % entire wing span, [m]
 half_wing_span = wing_span/2.0;
 inboard_half_span_ratio = 0.3;  % ratio: inboard_half_span/half_span
 inboard_taper = 1.0;
-outboard_taper = 0.6;
+outboard_taper = 0.5;
 
-incidence = 5.0;                % wing incidence angle [deg]
+incidence = 3.0;                % wing incidence angle [deg]
 inboard_twist = 0.0;            % inboard wing twist angle [deg]
-outboard_twist = -2.0;          % outboard wing twist angle [deg]
+outboard_twist = -1.0;          % outboard wing twist angle [deg]
 
 
 % inboard wing portion
@@ -234,29 +234,20 @@ fprintf('Wing Lift Coefficient (CL_wing): %.4f \n', CL_wing)
 
 %%  elliptical lift distribution
 
-% elliptical lift distribution
-iter = 1;
-L0 = 0.5; dL = 1;
-err = 1.0; err_norm = norm(err); tol = 1e-3;
-while err_norm > tol
+L0_elliptic = 4*Wo*grav/(pi*wing_span);
+L_dist_elliptical = nan(size(y_s));
+for i=2:length(y_s)
     
-    L0 = L0 + sign(err)*dL;
-    
-    % y = linspace(0,half_wing_span, 300);
-    y = y_s;
-    L_dist_elliptical = L0*sqrt(1-(y/half_wing_span).^2);
-    
-    % sum section lift over entire wing
-    dy = [y(2:end) - y(1:end-1) 0];
-    L_elliptical = 2*sum(L_dist_elliptical.*dy);
-    
-    err = (Wo*grav-L_elliptical);
-    err_norm = norm(err);
-    iter = iter + 1;
-    if iter > 500
-        break
-    end
+    a = 2*Wo*grav/pi/half_wing_span;
+    delta_y = y_s(i) - y_s(i-1);
+    L_dist_elliptical(i) = L0_elliptic*2/wing_span*sqrt(half_wing_span^2-y_s(i)^2);
+
 end
+L_dist_elliptical(1) = L_dist_elliptical(2);
+
+% sum section lift over entire wing
+dy = diff(y_s); dy = [dy(1) dy];
+L_elliptical = 2*sum(L_dist_elliptical.*dy);
 
 CL_elliptic = (2*L_elliptical)/(rho_SL*V_cruise^2*Sref);
 fprintf('Elliptic Lift Coefficient (CL_elliptic): %.4f \n', CL_elliptic)
