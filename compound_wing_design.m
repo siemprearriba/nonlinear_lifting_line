@@ -73,12 +73,12 @@ Cl_aoa_func = @(alpha_deg) (-3*0.0002741870*alpha_deg.^2 + 2*0.0015541706*alpha_
 %% Wing Geometry
 
 % performance parameters
-V_cruise = 208;                  % cruise velocity, [KCAS]
+V_cruise = 208;                 % cruise velocity, [KCAS]
 V_cruise = V_cruise/1.94;       % cruise velocity, [m/s
 
 % aircraft/wing parameters
-Wo = 51000;                       % aircraft mass, [kg]
-Sref = 116;                    % reference wing area, [m^2]
+Wo = 51000;                     % aircraft mass, [kg]
+Sref = 116;                     % reference wing area, [m^2]
 AR = 11;                        % Aspect Ratio
 wing_span = sqrt(Sref*AR);      % entire wing span, [m]
 half_wing_span = wing_span/2.0;
